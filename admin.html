@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — खोज Lost & Found</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Hind:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, getDocs, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDCZTiY5F3DLOvHoc-rdlHx5GagPkdXVP4",
+    authDomain: "lost-found-khoj.firebaseapp.com",
+    projectId: "lost-found-khoj",
+    storageBucket: "lost-found-khoj.firebasestorage.app",
+    messagingSenderId: "978729221383",
+    appId: "1:978729221383:web:00ce2631a4018e2fc4d9a2"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db = db;
+  window._fb = { collection, getDocs, deleteDoc, doc };
+</script>
+
+<style>
+:root{--red:#e63946;--blue:#457b9d;--orange:#f4a261;--dark:#1d3557;--green:#2a9d8f;--bg:#f0f4f8;--border:#dee2e6;--muted:#6c757d;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Hind',sans-serif;background:var(--bg);min-height:100vh;color:var(--dark);}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;background:linear-gradient(135deg,var(--dark),#2d6a8f);display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:white;border-radius:24px;padding:40px 30px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fi .5s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.l-icon{font-size:3rem;margin-bottom:14px;}
+.l-title{font-family:'Baloo 2',cursive;font-size:1.6rem;font-weight:800;color:var(--dark);margin-bottom:6px;}
+.l-sub{color:var(--muted);font-size:.9rem;margin-bottom:28px;}
+.l-inp{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Hind',sans-serif;font-size:1.2rem;outline:none;transition:all .3s;margin-bottom:14px;text-align:center;letter-spacing:4px;}
+.l-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(69,123,157,.15);}
+.l-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--dark),#2d6a8f);color:white;border:none;border-radius:12px;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .3s;}
+.l-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(29,53,87,.3);}
+.l-back{display:block;margin-top:16px;color:var(--blue);font-size:.85rem;text-decoration:none;}
+
+/* ADMIN PANEL */
+.admin{display:none;}
+.aheader{background:linear-gradient(135deg,var(--dark),#2d6a8f);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(29,53,87,.3);}
+.ahtitle{font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:800;color:white;display:flex;align-items:center;gap:8px;}
+.ahright{display:flex;gap:8px;align-items:center;}
+.lout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:7px 16px;border-radius:20px;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .3s;}
+.lout:hover{background:rgba(255,255,255,.25);}
+.home-link{color:white;font-size:.85rem;text-decoration:none;opacity:.7;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px;}
+.stat{background:white;border-radius:16px;padding:16px 12px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.07);transition:all .3s;}
+.stat:hover{transform:translateY(-3px);}
+.s-icon{font-size:1.8rem;margin-bottom:6px;}
+.s-num{font-family:'Baloo 2',cursive;font-size:1.8rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.s-lbl{font-size:.75rem;color:var(--muted);font-weight:600;}
+.sl .s-num{color:var(--red);}
+.sf .s-num{color:var(--green);}
+.sm .s-num{color:var(--orange);}
+
+/* TABS */
+.atabs{display:flex;background:white;padding:0 16px;border-bottom:2px solid var(--border);overflow-x:auto;}
+.atab{padding:12px 16px;border:none;background:transparent;font-family:'Baloo 2',cursive;font-size:.9rem;font-weight:700;cursor:pointer;color:var(--muted);white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .3s;}
+.atab.active{color:var(--dark);border-bottom-color:var(--dark);}
+
+/* SEARCH */
+.sbar{padding:14px 16px;background:white;border-bottom:1px solid var(--border);}
+.sinp{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Hind',sans-serif;font-size:.95rem;outline:none;transition:all .3s;background:var(--bg);}
+.sinp:focus{border-color:var(--blue);background:white;}
+
+/* CONTENT */
+.ac{padding:16px;}
+.ts{display:none;}.ts.active{display:block;}
+
+/* CARDS */
+.pc{background:white;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;gap:14px;align-items:flex-start;position:relative;transition:all .3s;}
+.pc:hover{box-shadow:0 4px 20px rgba(0,0,0,.12);}
+.pphoto{width:70px;height:70px;border-radius:12px;object-fit:cover;flex-shrink:0;border:2px solid var(--border);background:#f8f9fa;display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.pinfo{flex:1;min-width:0;}
+.pname{font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;margin-bottom:4px;}
+.pd{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:4px;margin-bottom:2px;}
+.pacts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.ab{padding:6px 12px;border-radius:8px;border:none;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:4px;}
+.bcall{background:var(--dark);color:white;}.bcall:hover{background:#2d6a8f;}
+.bwa{background:#e8f9ef;color:#25D366;}.bwa:hover{background:#25D366;color:white;}
+.bdel{background:#ffeaea;color:var(--red);}.bdel:hover{background:var(--red);color:white;}
+.sbadge{position:absolute;top:12px;right:12px;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
+.bl{background:#ffeaea;color:var(--red);}
+.bf{background:#e8f9ef;color:var(--green);}
+.bm{background:#fff3cd;color:#856404;}
+
+/* MATCH CARD */
+.mc{background:white;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-left:4px solid var(--orange);}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.mt{font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:6px;}
+.mconf{background:linear-gradient(135deg,var(--green),#1a7a6e);color:white;padding:4px 12px;border-radius:20px;font-size:.85rem;font-weight:700;}
+.mphotos{display:flex;gap:12px;align-items:center;margin-bottom:12px;}
+.mph{text-align:center;flex:1;}
+.mph img{width:100%;max-width:130px;height:120px;object-fit:cover;border-radius:12px;border:3px solid var(--border);}
+.mplbl{font-size:.78rem;font-weight:700;margin-top:6px;}
+.mvs{font-size:1.5rem;flex-shrink:0;}
+.mdet{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px;}
+.mdr{font-size:.85rem;display:flex;gap:6px;margin-bottom:4px;}
+.macts{display:flex;gap:8px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.ei{font-size:3rem;margin-bottom:12px;}
+.et{font-family:'Baloo 2',cursive;font-size:1rem;}
+
+/* REFRESH */
+.rfab{position:fixed;bottom:24px;right:24px;background:var(--dark);color:white;border:none;border-radius:50%;width:56px;height:56px;font-size:1.3rem;cursor:pointer;box-shadow:0 4px 20px rgba(29,53,87,.4);transition:all .3s;z-index:50;display:none;}
+.rfab:hover{transform:rotate(180deg);background:#2d6a8f;}
+
+.spin-sm{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:flex;justify-content:center;padding:40px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="l-icon">🛡️</div>
+    <div class="l-title">Admin Panel</div>
+    <div class="l-sub">खोज — Lost & Found System</div>
+    <input type="password" class="l-inp" id="pwd" placeholder="••••••••" onkeypress="if(event.key==='Enter')login()">
+    <button class="l-btn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Login करें</button>
+    <a href="index.html" class="l-back">← Main Website पर जाएं</a>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin" id="adminWrap">
+  <div class="aheader">
+    <div class="ahtitle"><i class="fas fa-shield-alt"></i> Admin Dashboard</div>
+    <div class="ahright">
+      <a href="index.html" class="home-link"><i class="fas fa-home"></i></a>
+      <button class="lout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat sl"><div class="s-icon">😢</div><div class="s-num" id="sL">—</div><div class="s-lbl">Lost</div></div>
+    <div class="stat sf"><div class="s-icon">🤝</div><div class="s-num" id="sF">—</div><div class="s-lbl">Found</div></div>
+    <div class="stat sm"><div class="s-icon">✅</div><div class="s-num" id="sM">—</div><div class="s-lbl">Matched</div></div>
+  </div>
+
+  <div class="atabs">
+    <button class="atab active" onclick="swTab('lost')">😢 Lost</button>
+    <button class="atab" onclick="swTab('found')">🤝 Found</button>
+    <button class="atab" onclick="swTab('matches')">✅ Matches</button>
+  </div>
+
+  <div class="sbar">
+    <input class="sinp" id="srch" placeholder="🔍 नाम, नंबर, location से खोजें..." oninput="filter()">
+  </div>
+
+  <div class="ac">
+    <div class="ts active" id="ts-lost"><div id="lostList"><div class="loading"><div class="spin-sm"></div></div></div></div>
+    <div class="ts" id="ts-found"><div id="foundList"><div class="loading"><div class="spin-sm"></div></div></div></div>
+    <div class="ts" id="ts-matches"><div id="matchList"><div class="loading"><div class="spin-sm"></div></div></div></div>
+  </div>
+</div>
+
+<button class="rfab" id="rfab" onclick="loadData()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+
+<script>
+const PWD = '578500';
+let allLost=[], allFound=[], allMatches=[];
+
+function login() {
+  if (document.getElementById('pwd').value === PWD) {
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('adminWrap').style.display='block';
+    document.getElementById('rfab').style.display='block';
+    loadData();
+  } else {
+    Swal.fire({icon:'error',title:'गलत Password!',text:'फिर से try करें',confirmButtonColor:'#e63946'});
+    document.getElementById('pwd').value='';
+  }
+}
+
+function logout() {
+  document.getElementById('adminWrap').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('rfab').style.display='none';
+  document.getElementById('pwd').value='';
+}
+
+function swTab(t) {
+  document.querySelectorAll('.ts').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.atab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('ts-'+t).classList.add('active');
+  const tabs=['lost','found','matches'];
+  document.querySelectorAll('.atab')[tabs.indexOf(t)].classList.add('active');
+  document.getElementById('srch').value='';
+  filter();
+}
+
+async function loadData() {
+  if (!window._db) { setTimeout(loadData,500); return; }
+  const {collection,getDocs} = window._fb;
+  const db = window._db;
+
+  try {
+    const [ls,fs,ms] = await Promise.all([
+      getDocs(collection(db,'lost')),
+      getDocs(collection(db,'found')),
+      getDocs(collection(db,'matches'))
+    ]);
+
+    allLost=[]; ls.forEach(d=>allLost.push({id:d.id,...d.data()}));
+    allFound=[]; fs.forEach(d=>allFound.push({id:d.id,...d.data()}));
+    allMatches=[]; ms.forEach(d=>allMatches.push({id:d.id,...d.data()}));
+
+    allLost.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    allFound.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    allMatches.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+
+    document.getElementById('sL').textContent=allLost.length;
+    document.getElementById('sF').textContent=allFound.length;
+    document.getElementById('sM').textContent=allMatches.length;
+
+    renderLost(allLost);
+    renderFound(allFound);
+    renderMatches(allMatches);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('lostList').innerHTML=`<div class="empty"><div class="ei">❌</div><div>Firebase connect नहीं हुआ<br><small>${e.message}</small></div></div>`;
+  }
+}
+
+function renderLost(data) {
+  const el=document.getElementById('lostList');
+  if(!data.length){el.innerHTML='<div class="empty"><div class="ei">😢</div><div class="et">कोई Lost Person नहीं</div></div>';return;}
+  el.innerHTML=data.map(p=>`
+    <div class="pc" data-search="${(p.name+p.mob+p.loc+p.addr).toLowerCase()}">
+      <div class="pphoto">${p.photoURL?`<img src="${p.photoURL}" style="width:70px;height:70px;border-radius:10px;object-fit:cover" onerror="this.parentElement.textContent='😢'">`:'😢'}</div>
+      <div class="pinfo">
+        <div class="pname">${p.name||'Unknown'}</div>
+        <div class="pd"><i class="fas fa-home" style="color:var(--blue)"></i> ${p.addr||'—'}</div>
+        <div class="pd"><i class="fas fa-phone" style="color:var(--green)"></i> ${p.mob||'—'}</div>
+        <div class="pd"><i class="fas fa-map-marker-alt" style="color:var(--red)"></i> ${p.loc||'—'}</div>
+        <div class="pd"><i class="fas fa-clock" style="color:var(--muted)"></i> ${fmtDate(p.createdAt)}</div>
+        ${p.extra?`<div class="pd" style="font-style:italic">"${p.extra}"</div>`:''}
+        <div class="pacts">
+          ${p.mob?`<button class="ab bcall" onclick="call('${p.mob}')"><i class="fas fa-phone"></i> Call</button>`:''}
+          ${p.mob?`<button class="ab bwa" onclick="wa('${p.mob}','${p.name}')"><i class="fab fa-whatsapp"></i></button>`:''}
+          <button class="ab bdel" onclick="del('lost','${p.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <span class="sbadge bl">Lost</span>
+    </div>`).join('');
+}
+
+function renderFound(data) {
+  const el=document.getElementById('foundList');
+  if(!data.length){el.innerHTML='<div class="empty"><div class="ei">🤝</div><div class="et">कोई Found Person नहीं</div></div>';return;}
+  el.innerHTML=data.map(p=>`
+    <div class="pc" data-search="${(p.name+p.mob+p.loc).toLowerCase()}">
+      <div class="pphoto">${p.photoURL?`<img src="${p.photoURL}" style="width:70px;height:70px;border-radius:10px;object-fit:cover" onerror="this.parentElement.textContent='🤝'">`:'🤝'}</div>
+      <div class="pinfo">
+        <div class="pname">${p.name||'Unknown'}</div>
+        <div class="pd"><i class="fas fa-phone" style="color:var(--green)"></i> Reporter: ${p.mob||'—'}</div>
+        <div class="pd"><i class="fas fa-map-marker-alt" style="color:var(--red)"></i> मिला: ${p.loc||'—'}</div>
+        <div class="pd"><i class="fas fa-clock" style="color:var(--muted)"></i> ${fmtDate(p.createdAt)}</div>
+        ${p.extra?`<div class="pd" style="font-style:italic">"${p.extra}"</div>`:''}
+        <div class="pacts">
+          ${p.mob?`<button class="ab bcall" onclick="call('${p.mob}')"><i class="fas fa-phone"></i> Call</button>`:''}
+          ${p.mob?`<button class="ab bwa" onclick="wa('${p.mob}','Reporter')"><i class="fab fa-whatsapp"></i></button>`:''}
+          <button class="ab bdel" onclick="del('found','${p.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <span class="sbadge bf">Found</span>
+    </div>`).join('');
+}
+
+function renderMatches(data) {
+  const el=document.getElementById('matchList');
+  if(!data.length){el.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">अभी कोई Match नहीं</div></div>';return;}
+  el.innerHTML=data.map(m=>`
+    <div class="mc">
+      <div class="mh">
+        <div class="mt"><i class="fas fa-check-circle" style="color:var(--green)"></i> ${m.lostName||'Unknown'} — मिल गए!</div>
+        <div class="mconf">${m.confidence||'—'}% Match</div>
+      </div>
+      <div class="mphotos">
+        <div class="mph">
+          ${m.lostPhoto?`<img src="${m.lostPhoto}" style="border-color:var(--red)" onerror="this.parentElement.innerHTML='<div style=width:100%;height:120px;background:#ffeaea;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.5rem>😢</div>'">`:'<div style="width:100%;height:120px;background:#ffeaea;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.5rem">😢</div>'}
+          <div class="mplbl" style="color:var(--red)">😢 ${m.lostName||'Lost'}</div>
+        </div>
+        <div class="mvs">🔁</div>
+        <div class="mph">
+          ${m.foundPhoto?`<img src="${m.foundPhoto}" style="border-color:var(--green)">`:'<div style="width:100%;height:120px;background:#e8f9ef;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.5rem">🤝</div>'}
+          <div class="mplbl" style="color:var(--green)">🤝 Found</div>
+        </div>
+      </div>
+      <div class="mdet">
+        <div class="mdr"><b>📍 कहाँ मिला:</b> ${m.foundLoc||'—'}</div>
+        <div class="mdr"><b>🏠 घर का पता:</b> ${m.lostAddr||'—'}</div>
+        <div class="mdr"><b>📞 Family:</b> ${m.lostMob||'—'}</div>
+        <div class="mdr"><b>📞 Reporter:</b> ${m.foundMob||'—'}</div>
+        <div class="mdr"><b>📅 Time:</b> ${fmtDate(m.createdAt)}</div>
+      </div>
+      <div class="macts">
+        ${m.lostMob?`<button class="ab bcall" onclick="call('${m.lostMob}')"><i class="fas fa-phone"></i> Family Call</button>`:''}
+        ${m.lostMob?`<button class="ab bwa" onclick="wa('${m.lostMob}','${m.lostName}')"><i class="fab fa-whatsapp"></i> WhatsApp</button>`:''}
+        <button class="ab bdel" onclick="del('matches','${m.id}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+async function del(col, id) {
+  const r = await Swal.fire({
+    title:'Delete करना है?',text:'यह record permanently हट जाएगा',icon:'warning',
+    showCancelButton:true,confirmButtonColor:'#e63946',cancelButtonColor:'#457b9d',
+    confirmButtonText:'हाँ, Delete',cancelButtonText:'रहने दो'
+  });
+  if(r.isConfirmed) {
+    try {
+      const {deleteDoc,doc} = window._fb;
+      await deleteDoc(doc(window._db,col,id));
+      Swal.fire({icon:'success',title:'Delete हो गया!',timer:1500,showConfirmButton:false});
+      loadData();
+    } catch(e) { Swal.fire({icon:'error',title:'Error!',text:e.message}); }
+  }
+}
+
+function filter() {
+  const q=document.getElementById('srch').value.toLowerCase();
+  document.querySelectorAll('.pc,.mc').forEach(c=>{
+    c.style.display=c.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+function call(mob){window.open('tel:'+mob);}
+function wa(mob,name){window.open(`https://wa.me/91${mob}?text=${encodeURIComponent(`${name} के बारे में जानकारी मिली है`)}`);}
+function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleString('hi-IN');}catch{return d;}}
+
+document.addEventListener('keypress',e=>{if(e.key==='Enter'&&document.getElementById('loginWrap').style.display!=='none')login();});
+</script>
+</body>
+</html>
