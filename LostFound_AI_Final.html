@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lost & Found System | खोया-पाया</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Hind:wght@300;400;600&display=swap');
+
+:root {
+  --primary: #1a237e;
+  --accent: #f57f17;
+  --green: #2e7d32;
+  --red: #c62828;
+  --purple: #512da8;
+  --bg: #eef0fb;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:'Hind',sans-serif; background:var(--bg); min-height:100vh; overflow-x:hidden; }
+
+header {
+  background: linear-gradient(135deg,#1a237e,#283593,#3949ab);
+  color:white; padding:18px 20px 14px; text-align:center;
+  box-shadow:0 4px 24px rgba(26,35,126,0.35); position:relative; overflow:hidden;
+}
+header::before { content:''; position:absolute; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.04); top:-80px; right:-60px; }
+header h1 { font-family:'Baloo 2',cursive; font-size:1.65rem; font-weight:800; }
+header p  { font-size:0.78rem; opacity:0.7; margin-top:2px; }
+
+.admin-btn-top {
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.25);
+  color:white; padding:7px 13px; border-radius:20px;
+  font-family:'Baloo 2',cursive; font-size:0.78rem; font-weight:700; cursor:pointer;
+}
+
+.sync-bar {
+  background:#e8f5e9; border-bottom:2px solid #c8e6c9;
+  padding:7px 16px; display:flex; align-items:center; justify-content:center;
+  gap:7px; font-size:0.76rem; color:#2e7d32; font-weight:600;
+}
+.sync-dot { width:8px; height:8px; border-radius:50%; background:#2e7d32; animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+.ai-bar {
+  background:linear-gradient(135deg,#1a237e,#512da8);
+  padding:7px 16px; display:flex; align-items:center; justify-content:center;
+  gap:7px; font-size:0.76rem; color:white; font-weight:600;
+}
+
+.tabs { display:flex; max-width:480px; margin:14px auto 0; padding:0 14px; gap:10px; }
+.tab-btn {
+  flex:1; padding:11px 8px; border:none; border-radius:15px;
+  font-family:'Baloo 2',cursive; font-size:0.9rem; font-weight:700;
+  cursor:pointer; transition:all 0.25s; background:white; line-height:1.35;
+  border:2px solid #e8e8e8; color:#bbb;
+}
+.tab-btn.t-lost  { color:#c62828; border-color:#ffcdd2; }
+.tab-btn.t-found { color:#2e7d32; border-color:#c8e6c9; }
+.tab-btn.active-lost  { background:linear-gradient(135deg,#c62828,#e53935); color:white; border-color:transparent; box-shadow:0 5px 16px rgba(198,40,40,0.32); transform:translateY(-1px); }
+.tab-btn.active-found { background:linear-gradient(135deg,#2e7d32,#43a047); color:white; border-color:transparent; box-shadow:0 5px 16px rgba(46,125,50,0.32); transform:translateY(-1px); }
+
+.page { display:none; }
+.page.active { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.container { max-width:480px; margin:0 auto; padding:14px 14px 50px; }
+.card { background:white; border-radius:22px; padding:22px 20px; box-shadow:var(--shadow); margin-bottom:14px; }
+.card-title { font-family:'Baloo 2',cursive; font-size:1.12rem; font-weight:800; margin-bottom:18px; color:var(--primary); }
+
+.photo-wrap { display:flex; flex-direction:column; align-items:center; margin-bottom:18px; }
+.photo-box {
+  width:120px; height:120px; border-radius:50%;
+  border:3px dashed #9fa8da; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; cursor:pointer;
+  overflow:hidden; background:#f4f5ff; position:relative; transition:all 0.25s;
+}
+.photo-box:hover { border-color:var(--primary); }
+.photo-box img { width:100%; height:100%; object-fit:cover; }
+.photo-box .ph-icon { font-size:2rem; }
+.photo-box .ph-text { font-size:0.68rem; color:#aaa; margin-top:4px; text-align:center; line-height:1.3; }
+.photo-box input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.photo-label { margin-top:8px; font-size:0.78rem; color:#888; }
+
+.photo-required-note { background:#fff3e0; border:1.5px solid #ffe0b2; border-radius:11px; padding:9px 13px; font-size:0.78rem; color:#e65100; margin-bottom:14px; text-align:center; }
+
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:0.78rem; font-weight:600; color:#555; margin-bottom:5px; }
+.field label .req { color:#e53935; }
+.field label .opt { font-weight:400; color:#bbb; font-size:0.72rem; }
+.field input {
+  width:100%; padding:12px 14px; border:2px solid #efefef; border-radius:12px;
+  font-family:'Hind',sans-serif; font-size:0.95rem; color:#222;
+  outline:none; transition:all 0.2s; background:#fafafa;
+}
+.field input:focus { border-color:var(--primary); background:white; box-shadow:0 0 0 3px rgba(26,35,126,0.07); }
+
+.btn-submit-lost {
+  width:100%; padding:14px; background:linear-gradient(135deg,#c62828,#e53935);
+  color:white; border:none; border-radius:14px; font-family:'Baloo 2',cursive;
+  font-size:1.05rem; font-weight:800; cursor:pointer; transition:all 0.2s;
+  box-shadow:0 5px 16px rgba(198,40,40,0.28);
+}
+.btn-submit-lost:disabled { opacity:0.6; cursor:not-allowed; }
+.btn-submit-lost:not(:disabled):hover { transform:translateY(-2px); }
+
+.btn-submit-found {
+  width:100%; padding:14px; background:linear-gradient(135deg,#2e7d32,#43a047);
+  color:white; border:none; border-radius:14px; font-family:'Baloo 2',cursive;
+  font-size:1.05rem; font-weight:800; cursor:pointer; transition:all 0.2s;
+  box-shadow:0 5px 16px rgba(46,125,50,0.28);
+}
+.btn-submit-found:disabled { opacity:0.6; cursor:not-allowed; }
+.btn-submit-found:not(:disabled):hover { transform:translateY(-2px); }
+
+.loading-bar { display:none; text-align:center; padding:16px 0 4px; font-family:'Baloo 2',cursive; color:var(--accent); font-size:0.92rem; }
+.spinner { width:30px; height:30px; border:4px solid #ffe0b2; border-top-color:var(--accent); border-radius:50%; animation:spin 0.75s linear infinite; margin:0 auto 8px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.overlay { display:none; position:fixed; inset:0; background:rgba(5,10,40,0.7); z-index:900; align-items:center; justify-content:center; padding:18px; backdrop-filter:blur(3px); }
+.overlay.show { display:flex; animation:fadeIn 0.3s; }
+
+.popup-box { background:white; border-radius:24px; padding:24px 22px; width:100%; max-width:360px; animation:slideUp 0.3s ease; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+@keyframes slideUp { from{transform:translateY(50px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+.popup-title { font-family:'Baloo 2',cursive; font-size:1.2rem; font-weight:800; text-align:center; margin-bottom:16px; color:var(--primary); }
+.match-photos { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; }
+.match-photos .mp-img { width:78px; height:78px; border-radius:50%; object-fit:cover; border:3px solid #e0e0e0; }
+.match-photos .mp-ph  { width:78px; height:78px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:1.8rem; border:3px solid #e0e0e0; }
+.match-vs { font-family:'Baloo 2',cursive; font-weight:800; color:var(--accent); background:#fff3e0; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.85rem; }
+
+.result-badge { text-align:center; padding:10px 20px; border-radius:30px; font-family:'Baloo 2',cursive; font-size:1.12rem; font-weight:800; margin-bottom:14px; }
+.rb-match { background:#e8f5e9; color:#2e7d32; }
+.rb-no    { background:#ffebee; color:#c62828; }
+
+.info-table { background:#f8f9ff; border-radius:13px; padding:12px; margin-bottom:12px; }
+.info-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee; font-size:0.84rem; }
+.info-row:last-child { border:none; }
+.info-row .lbl { color:#aaa; }
+.info-row .val { font-weight:600; color:#222; text-align:right; max-width:62%; }
+
+.contact-cta { background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:12px; padding:12px 14px; font-size:0.85rem; color:#1b5e20; font-weight:600; margin-bottom:13px; text-align:center; border:1.5px solid #a5d6a7; }
+.no-match-note { background:#fff3e0; border-radius:12px; padding:11px 14px; font-size:0.82rem; color:#e65100; margin-bottom:13px; text-align:center; }
+.btn-close-popup { width:100%; padding:13px; background:var(--primary); color:white; border:none; border-radius:13px; font-family:'Baloo 2',cursive; font-size:1rem; font-weight:700; cursor:pointer; }
+
+/* ADMIN LOGIN */
+#adminLoginOverlay { display:none; position:fixed; inset:0; background:rgba(5,8,35,0.9); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
+#adminLoginOverlay.show { display:flex; animation:fadeIn 0.3s; }
+.login-box { background:white; border-radius:26px; padding:28px 24px; width:100%; max-width:340px; text-align:center; animation:slideUp 0.35s ease; }
+.login-icon { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,var(--primary),#3949ab); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 12px; }
+.login-box h2 { font-family:'Baloo 2',cursive; font-size:1.3rem; font-weight:800; color:var(--primary); margin-bottom:4px; }
+.login-box p  { font-size:0.8rem; color:#aaa; margin-bottom:20px; }
+.pin-row { display:flex; gap:8px; justify-content:center; margin-bottom:18px; }
+.pin-row input { width:42px; height:50px; border:2.5px solid #e8e8e8; border-radius:13px; font-family:'Baloo 2',cursive; font-size:1.5rem; font-weight:800; text-align:center; outline:none; transition:all 0.2s; color:var(--primary); background:#f8f9ff; }
+.pin-row input:focus { border-color:var(--primary); background:white; }
+.login-error { background:#ffebee; color:#c62828; border-radius:10px; padding:8px 14px; font-size:0.82rem; font-weight:600; margin-bottom:12px; display:none; }
+.btn-login { width:100%; padding:14px; background:linear-gradient(135deg,var(--primary),#3949ab); color:white; border:none; border-radius:13px; font-family:'Baloo 2',cursive; font-size:1.02rem; font-weight:800; cursor:pointer; margin-bottom:10px; }
+.btn-cancel-login { width:100%; padding:11px; background:white; color:#999; border:2px solid #eee; border-radius:12px; font-family:'Baloo 2',cursive; font-size:0.9rem; font-weight:700; cursor:pointer; }
+
+/* ADMIN PANEL */
+#adminPanel { display:none; }
+#adminPanel.show { display:block; }
+.admin-header { background:linear-gradient(135deg,#080e3a,#1a237e); color:white; padding:15px 18px; display:flex; align-items:center; justify-content:space-between; }
+.admin-header-info h2 { font-family:'Baloo 2',cursive; font-size:1.1rem; font-weight:800; }
+.admin-header-info p  { font-size:0.72rem; opacity:0.6; margin-top:1px; }
+.btn-logout { background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.22); color:white; padding:7px 14px; border-radius:20px; font-family:'Baloo 2',cursive; font-size:0.78rem; font-weight:700; cursor:pointer; }
+.admin-tabs { display:flex; background:#080e3a; padding:0 12px; overflow-x:auto; scrollbar-width:none; }
+.admin-tabs::-webkit-scrollbar { display:none; }
+.atab { padding:11px 14px; color:rgba(255,255,255,0.4); font-family:'Baloo 2',cursive; font-size:0.82rem; font-weight:700; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; transition:all 0.2s; }
+.atab.active { color:white; border-bottom-color:var(--accent); }
+.admin-container { max-width:600px; margin:0 auto; padding:14px 14px 50px; }
+.admin-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+.astat { background:white; border-radius:15px; padding:14px 8px; text-align:center; box-shadow:var(--shadow); }
+.astat-num { font-family:'Baloo 2',cursive; font-size:1.65rem; font-weight:800; }
+.astat-lbl { font-size:0.69rem; color:#aaa; margin-top:2px; }
+.info-card { background:linear-gradient(135deg,#e8eaf6,#ede7f6); border-radius:16px; padding:14px 16px; margin-bottom:12px; border:1.5px solid #c5cae9; }
+.info-card-title { font-family:'Baloo 2',cursive; font-weight:800; color:var(--primary); margin-bottom:10px; font-size:0.95rem; }
+.info-card-row { font-size:0.82rem; color:#555; padding:3px 0; }
+.admin-item { background:white; border-radius:15px; padding:13px; display:flex; align-items:center; gap:12px; margin-bottom:9px; box-shadow:0 2px 12px rgba(0,0,0,0.06); border-left:4px solid transparent; }
+.admin-item.al { border-left-color:var(--red); }
+.admin-item.af { border-left-color:var(--green); }
+.admin-item img { width:48px; height:48px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid #e8e8e8; }
+.admin-item .no-ph { width:48px; height:48px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+.admin-info { flex:1; min-width:0; }
+.admin-info .an { font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.admin-info .ad { font-size:0.74rem; color:#999; margin-top:2px; }
+.atag { font-size:0.67rem; font-weight:700; padding:3px 9px; border-radius:10px; flex-shrink:0; margin-left:auto; }
+.atag.lost  { background:#ffcdd2; color:#c62828; }
+.atag.found { background:#c8e6c9; color:#2e7d32; }
+.admin-match-card { background:white; border-radius:16px; padding:14px; margin-bottom:11px; box-shadow:0 2px 14px rgba(0,0,0,0.07); border:2px solid #ede7f6; }
+.amc-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.amc-badge  { background:#ede7f6; color:#512da8; font-family:'Baloo 2',cursive; font-weight:800; font-size:0.78rem; padding:4px 12px; border-radius:20px; }
+.amc-date   { font-size:0.72rem; color:#bbb; margin-left:auto; }
+.amc-pair { display:flex; gap:8px; }
+.amc-half { flex:1; background:#f8f9ff; border-radius:12px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.amc-half img { width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid #c5cae9; }
+.amc-half .no-photo { width:52px; height:52px; border-radius:50%; background:#e8eaf6; display:flex; align-items:center; justify-content:center; font-size:1.4rem; border:2px solid #c5cae9; }
+.amc-half .hn { font-weight:700; font-size:0.82rem; text-align:center; }
+.amc-half .hd { font-size:0.7rem; color:#888; text-align:center; }
+.amc-tag { font-size:0.66rem; font-weight:700; padding:2px 8px; border-radius:8px; }
+.amc-tag.lost  { background:#ffcdd2; color:#c62828; }
+.amc-tag.found { background:#c8e6c9; color:#2e7d32; }
+.amc-conn { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:3px; padding:0 2px; }
+.amc-line { width:2px; flex:1; background:#d1c4e9; min-height:18px; }
+.amc-icon { font-size:1.1rem; }
+.empty-box { text-align:center; padding:26px; color:#ccc; font-size:0.88rem; background:white; border-radius:15px; margin-bottom:9px; }
+.btn-refresh-admin { width:100%; padding:11px; background:white; color:var(--primary); border:2px solid #c5cae9; border-radius:13px; font-family:'Baloo 2',cursive; font-size:0.9rem; font-weight:700; cursor:pointer; margin-bottom:12px; }
+.btn-clr-admin { width:100%; padding:11px; background:white; color:var(--red); border:2px solid #ffcdd2; border-radius:13px; font-family:'Baloo 2',cursive; font-size:0.9rem; font-weight:700; cursor:pointer; margin-top:8px; }
+.admin-page { display:none; }
+.admin-page.active { display:block; animation:fadeIn 0.3s; }
+.section-note { background:#fff3e0; border:1.5px solid #ffe0b2; border-radius:13px; padding:11px 14px; font-size:0.8rem; color:#bf360c; margin-bottom:13px; }
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(90px); background:#1a1a2e; color:white; padding:11px 24px; border-radius:30px; font-family:'Baloo 2',cursive; font-weight:700; font-size:0.88rem; transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); z-index:9999; max-width:92vw; text-align:center; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+#mainApp.hidden { display:none; }
+</style>
+</head>
+<body>
+
+<div id="mainApp">
+
+  <!-- DONATION BANNER -->
+  <div class="donation-bar" id="donationBar">
+    <div class="donation-text">
+      🙏 <strong>यह सेवा बिल्कुल मुफ्त है!</strong>
+      अगर आपको यह उपयोगी लगी और मन हो तो सहयोग करें ❤️<br>
+      <span class="upi-box">📲 UPI: fk166511@okaxis</span>
+    </div>
+    <button class="donation-close" onclick="document.getElementById('donationBar').style.display='none'">✕</button>
+  </div>
+
+  <header>
+    <h1>🔍 Lost & Found</h1>
+    <p>खोया-पाया System | AI Face Match</p>
+    <button class="admin-btn-top" onclick="showAdminLogin()">🔐 Admin</button>
+  </header>
+  <div class="sync-bar">
+    <div class="sync-dot"></div>
+    🌐 Firebase Live — सभी Mobiles पर Sync
+  </div>
+  <div class="ai-bar">
+    🤖 Real AI Face Recognition — Face++ Powered
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn t-lost active-lost" id="tab-lost" onclick="switchTab('lost')">😢 Lost Person<br><small>खोया हुआ</small></button>
+    <button class="tab-btn t-found" id="tab-found" onclick="switchTab('found')">🙌 Found Person<br><small>मिला हुआ</small></button>
+  </div>
+
+  <!-- LOST PAGE -->
+  <div class="page active" id="page-lost">
+    <div class="container">
+      <div class="card">
+        <div class="card-title">😢 खोए हुए व्यक्ति की जानकारी</div>
+        <div class="photo-wrap">
+          <div class="photo-box" id="lostBox">
+            <div class="ph-icon">📷</div>
+            <div class="ph-text">Photo<br>Upload करें</div>
+            <input type="file" id="lostFile" accept="image/*" onchange="handlePhoto('lostFile','lostBox','lost')">
+          </div>
+          <div class="photo-label">खोए हुए व्यक्ति की फोटो</div>
+        </div>
+        <div class="photo-required-note">⚠️ Photo जरूरी है — AI Face Match के लिए</div>
+        <div class="field"><label>नाम (Name) <span class="req">*</span></label><input type="text" id="lName" placeholder="जैसे: Ramesh Kumar"></div>
+        <div class="field"><label>पता (Address) <span class="req">*</span></label><input type="text" id="lAddr" placeholder="घर का पूरा पता"></div>
+        <div class="field"><label>मोबाइल नंबर <span class="req">*</span></label><input type="tel" id="lMobile" placeholder="10 अंक का नंबर" maxlength="10" inputmode="numeric"></div>
+        <button class="btn-submit-lost" id="btnLost" onclick="submitLost()">📤 Submit — Lost Person</button>
+        <div class="loading-bar" id="lostLoading"><div class="spinner"></div>Firebase में Save हो रहा है...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOUND PAGE -->
+  <div class="page" id="page-found">
+    <div class="container">
+      <div class="card">
+        <div class="card-title">🙌 मिले हुए व्यक्ति की जानकारी</div>
+        <div class="photo-wrap">
+          <div class="photo-box" id="foundBox">
+            <div class="ph-icon">📷</div>
+            <div class="ph-text">Photo<br>Upload करें</div>
+            <input type="file" id="foundFile" accept="image/*" onchange="handlePhoto('foundFile','foundBox','found')">
+          </div>
+          <div class="photo-label">मिले हुए व्यक्ति की फोटो</div>
+        </div>
+        <div class="photo-required-note">⚠️ Photo जरूरी है — AI Face Match के लिए</div>
+        <div class="field"><label>नाम <span class="opt">(Optional)</span></label><input type="text" id="fName" placeholder="नाम पता हो तो लिखें"></div>
+        <div class="field"><label>आपका मोबाइल नंबर <span class="req">*</span></label><input type="tel" id="fMobile" placeholder="जिसने मिला उसका नंबर" maxlength="10" inputmode="numeric"></div>
+        <div class="field"><label>कहाँ मिला? <span class="req">*</span></label><input type="text" id="fLocation" placeholder="जैसे: Railway Station, Market..."></div>
+        <button class="btn-submit-found" id="btnFound" onclick="submitFound()">📤 Submit — Found Person</button>
+        <div class="loading-bar" id="foundLoading"><div class="spinner"></div>🤖 AI Face Match हो रहा है...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MATCH POPUP -->
+<div class="overlay" id="matchPopup">
+  <div class="popup-box">
+    <div class="popup-title">🔍 Match Result</div>
+    <div class="match-photos" id="popupPhotos"></div>
+    <div class="result-badge" id="popupBadge"></div>
+    <div class="info-table" id="popupInfo"></div>
+    <div id="popupCTA"></div>
+    <button class="btn-close-popup" onclick="closePopup()">✓ ठीक है</button>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLoginOverlay">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <h2>Admin Login</h2>
+    <p>6-digit PIN डालें</p>
+    <div class="login-error" id="loginError">❌ गलत PIN!</div>
+    <div class="pin-row">
+      <input type="password" maxlength="1" id="p1" inputmode="numeric" oninput="pinMove(this,'p2')">
+      <input type="password" maxlength="1" id="p2" inputmode="numeric" oninput="pinMove(this,'p3')">
+      <input type="password" maxlength="1" id="p3" inputmode="numeric" oninput="pinMove(this,'p4')">
+      <input type="password" maxlength="1" id="p4" inputmode="numeric" oninput="pinMove(this,'p5')">
+      <input type="password" maxlength="1" id="p5" inputmode="numeric" oninput="pinMove(this,'p6')">
+      <input type="password" maxlength="1" id="p6" inputmode="numeric" oninput="pinMove(this,null)">
+    </div>
+    <button class="btn-login" onclick="doLogin()">🔓 Login करें</button>
+    <button class="btn-cancel-login" onclick="closeAdminLogin()">✕ Cancel</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+  <div class="admin-header">
+    <div class="admin-header-info"><h2>🛡️ Admin Dashboard</h2><p>🔥 Firebase + AI Face Match</p></div>
+    <button class="btn-logout" onclick="adminLogout()">🚪 Logout</button>
+  </div>
+  <div class="admin-tabs">
+    <div class="atab active" onclick="switchAdminTab('stats')" id="atab-stats">📊 Overview</div>
+    <div class="atab" onclick="switchAdminTab('lost')"  id="atab-lost">😢 Lost</div>
+    <div class="atab" onclick="switchAdminTab('found')" id="atab-found">🙌 Found</div>
+    <div class="atab" onclick="switchAdminTab('match')" id="atab-match">✅ Matched</div>
+  </div>
+  <div class="admin-page active" id="apg-stats">
+    <div class="admin-container">
+      <div class="admin-stats">
+        <div class="astat"><div class="astat-num" style="color:var(--red)"    id="as-lost">—</div><div class="astat-lbl">😢 Lost</div></div>
+        <div class="astat"><div class="astat-num" style="color:var(--green)"  id="as-found">—</div><div class="astat-lbl">🙌 Found</div></div>
+        <div class="astat"><div class="astat-num" style="color:var(--purple)" id="as-match">—</div><div class="astat-lbl">✅ Matched</div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">🤖 AI Face Match System</div>
+        <div class="info-card-row">✅ Face++ Real AI Face Recognition</div>
+        <div class="info-card-row">🔥 Firebase Real-time Database</div>
+        <div class="info-card-row">🌐 सभी Mobiles पर Live Sync</div>
+        <div class="info-card-row">🔒 Users सिर्फ अपना Match देखें</div>
+        <div class="info-card-row">🔐 Admin PIN: <strong>578500</strong></div>
+      </div>
+      <button class="btn-refresh-admin" onclick="loadAdminData()">🔄 Data Refresh करें</button>
+      <button class="btn-clr-admin" onclick="adminClearAll()">🗑️ सभी Data हटाएं</button>
+    </div>
+  </div>
+  <div class="admin-page" id="apg-lost"><div class="admin-container"><button class="btn-refresh-admin" onclick="loadAdminData()">🔄 Refresh</button><div id="admin-lost-list"></div></div></div>
+  <div class="admin-page" id="apg-found"><div class="admin-container"><button class="btn-refresh-admin" onclick="loadAdminData()">🔄 Refresh</button><div class="section-note">⚠️ ये Unmatched Found persons हैं</div><div id="admin-found-list"></div></div></div>
+  <div class="admin-page" id="apg-match"><div class="admin-container"><button class="btn-refresh-admin" onclick="loadAdminData()">🔄 Refresh</button><div id="admin-match-list"></div></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════
+const DB_URL   = 'https://lost-found-app-9ae30-default-rtdb.asia-southeast1.firebasedatabase.app';
+const ADMIN_PIN   = '578500';
+const FACE_MATCH_THRESHOLD = 60; // 60% से ऊपर = match
+
+// ══════════════════════════════════════
+//  FIREBASE REST
+// ══════════════════════════════════════
+async function fbGet(path) {
+  const res = await fetch(`${DB_URL}/${path}.json`);
+  return res.json();
+}
+async function fbPush(path, data) {
+  const res = await fetch(`${DB_URL}/${path}.json`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+async function fbUpdate(path, data) {
+  await fetch(`${DB_URL}/${path}.json`, {
+    method:'PATCH', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+}
+async function fbDelete(path) {
+  await fetch(`${DB_URL}/${path}.json`, { method:'DELETE' });
+}
+
+// ══════════════════════════════════════
+//  FACE++ REAL AI MATCH
+// ══════════════════════════════════════
+async function faceCompare(base64img1, base64img2) {
+  try {
+    // Try Vercel server first
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    
+    const res = await fetch('https://face-server-khaki.vercel.app/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image1: base64img1, image2: base64img2 }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    
+    const data = await res.json();
+    console.log('Face server response:', data);
+    
+    if (data.success && data.score !== undefined) {
+      console.log('AI Score:', data.score);
+      return data.score;
+    } else {
+      console.warn('Face server error:', data);
+      return -1; // Server responded but face not detected
+    }
+  } catch(e) {
+    console.error('Face server unreachable:', e.message);
+    return -2; // Server unreachable
+  }
+}
+
+// ══════════════════════════════════════
+//  PHOTO HANDLING
+// ══════════════════════════════════════
+const photos = { lost: null, found: null };
+
+function handlePhoto(fileId, boxId, side) {
+  const file = document.getElementById(fileId).files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 600;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h = Math.round(h*(MAX/w)); w = MAX; } }
+      else       { if (h > MAX) { w = Math.round(w*(MAX/h)); h = MAX; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.85);
+      photos[side] = compressed;
+      document.getElementById(boxId).innerHTML =
+        `<img src="${compressed}">
+         <input type="file" id="${fileId}" accept="image/*" onchange="handlePhoto('${fileId}','${boxId}','${side}')">`;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetBox(boxId, fileId, side) {
+  photos[side] = null;
+  document.getElementById(boxId).innerHTML = `
+    <div class="ph-icon">📷</div>
+    <div class="ph-text">Photo<br>Upload करें</div>
+    <input type="file" id="${fileId}" accept="image/*" onchange="handlePhoto('${fileId}','${boxId}','${side}')">`;
+}
+
+// ══════════════════════════════════════
+//  SUBMIT LOST
+// ══════════════════════════════════════
+async function submitLost() {
+  const name    = document.getElementById('lName').value.trim();
+  const address = document.getElementById('lAddr').value.trim();
+  const mobile  = document.getElementById('lMobile').value.trim();
+
+  if (!photos.lost)          { toast('❌ Photo जरूरी है — AI Match के लिए!','#c62828'); return; }
+  if (!name)                 { toast('❌ नाम जरूरी है!','#c62828'); return; }
+  if (!address)              { toast('❌ पता जरूरी है!','#c62828'); return; }
+  if (mobile.length < 10)   { toast('❌ सही मोबाइल नंबर डालें!','#c62828'); return; }
+
+  setLoad('lostLoading','btnLost',true);
+
+  const { name: lostKey } = await fbPush('lost', {
+    name, address, mobile,
+    photo: photos.lost,
+    matched: false,
+    date: today(), time: timeNow(), ts: Date.now()
+  });
+
+  const lp = { name, address, mobile, photo: photos.lost };
+
+  // Match with existing unmatched FOUND persons
+  const foundAll = await fbGet('found') || {};
+  const unmatchedFound = Object.entries(foundAll).filter(([,v]) => !v.matched);
+
+  let bestFKey = null, bestFPerson = null, bestFScore = 0;
+  for (const [key, fp] of unmatchedFound) {
+    if (!fp.photo) continue;
+    const score = await faceCompare(photos.lost, fp.photo);
+    if (score < 0) continue; // skip errors
+    if (score > bestFScore) { bestFScore = score; bestFKey = key; bestFPerson = fp; }
+  }
+
+  const isMatch = bestFScore >= FACE_MATCH_THRESHOLD;
+  if (isMatch && bestFKey) {
+    await fbPush('matches', {
+      lostId: lostKey, foundId: bestFKey,
+      score: bestFScore,
+      date: today(), time: timeNow(), ts: Date.now(),
+      lostPerson:  { name:lp.name, mobile:lp.mobile, address:lp.address, photo:lp.photo },
+      foundPerson: { name:bestFPerson.name, mobile:bestFPerson.mobile, location:bestFPerson.location, photo:bestFPerson.photo }
+    });
+    await fbUpdate(`lost/${lostKey}`,   { matched: true });
+    await fbUpdate(`found/${bestFKey}`, { matched: true });
+  }
+
+  setLoad('lostLoading','btnLost',false);
+
+  if (unmatchedFound.length === 0) {
+    toast('✅ Submit हो गया! Found person submit होने पर AI match होगा।','#2e7d32');
+  } else if (isMatch) {
+    toast('🎉 Match मिला! Admin panel में देखें।','#2e7d32');
+  } else {
+    toast('✅ Submit हो गया! अभी कोई match नहीं मिला।','#1a237e');
+  }
+
+  document.getElementById('lName').value   = '';
+  document.getElementById('lAddr').value   = '';
+  document.getElementById('lMobile').value = '';
+  resetBox('lostBox','lostFile','lost');
+}
+
+// ══════════════════════════════════════
+//  SUBMIT FOUND + AI FACE MATCH
+// ══════════════════════════════════════
+async function submitFound() {
+  const name     = document.getElementById('fName').value.trim();
+  const mobile   = document.getElementById('fMobile').value.trim();
+  const location = document.getElementById('fLocation').value.trim();
+
+  if (!photos.found)        { toast('❌ Photo जरूरी है — AI Match के लिए!','#c62828'); return; }
+  if (mobile.length < 10)  { toast('❌ आपका मोबाइल नंबर डालें!','#c62828'); return; }
+  if (!location)            { toast('❌ कहाँ मिला यह जरूरी है!','#c62828'); return; }
+
+  setLoad('foundLoading','btnFound',true);
+
+  const fp = {
+    name: name || 'अज्ञात',
+    mobile, location,
+    photo: photos.found,
+    matched: false,
+    date: today(), time: timeNow(), ts: Date.now()
+  };
+
+  // Get all unmatched lost persons
+  const lostAll = await fbGet('lost') || {};
+  const unmatched = Object.entries(lostAll).filter(([,v]) => !v.matched);
+
+  let bestKey = null, bestPerson = null, bestScore = 0;
+  let serverError = false;
+
+  // AI Face compare with each unmatched lost person
+  for (const [key, lp] of unmatched) {
+    if (!lp.photo) continue;
+    const score = await faceCompare(lp.photo, fp.photo);
+    console.log(`Face compare ${lp.name}: ${score}%`);
+    if (score === -2) { serverError = true; break; }
+    if (score > bestScore) { bestScore = score; bestKey = key; bestPerson = lp; }
+  }
+
+  if (serverError) {
+    setLoad('foundLoading','btnFound',false);
+    toast('❌ Face Match server से connect नहीं हो सका! बाद में try करें।','#c62828');
+    return;
+  }
+
+  const isMatch = bestScore >= FACE_MATCH_THRESHOLD;
+  const { name: foundKey } = await fbPush('found', fp);
+
+  if (isMatch && bestKey) {
+    await fbPush('matches', {
+      lostId: bestKey, foundId: foundKey,
+      score: bestScore,
+      date: today(), time: timeNow(), ts: Date.now(),
+      lostPerson:  { name:bestPerson.name, mobile:bestPerson.mobile, address:bestPerson.address, photo:bestPerson.photo },
+      foundPerson: { name:fp.name, mobile:fp.mobile, location:fp.location, photo:fp.photo }
+    });
+    await fbUpdate(`lost/${bestKey}`,   { matched: true });
+    await fbUpdate(`found/${foundKey}`, { matched: true });
+  }
+
+  setLoad('foundLoading','btnFound',false);
+  document.getElementById('fName').value     = '';
+  document.getElementById('fMobile').value   = '';
+  document.getElementById('fLocation').value = '';
+  resetBox('foundBox','foundFile','found');
+
+  if (unmatched.length === 0) {
+    toast('✅ Submit हो गया! अभी कोई Lost person नहीं है।','#1a237e');
+  } else {
+    showMatchPopup(bestPerson, fp, isMatch, bestScore);
+  }
+}
+
+// ══════════════════════════════════════
+//  MATCH POPUP
+// ══════════════════════════════════════
+function showMatchPopup(lost, found, isMatch, score) {
+  const col = isMatch ? '#a5d6a7' : '#ef9a9a';
+  const lImg = lost && lost.photo ? `<img class="mp-img" src="${lost.photo}" style="border-color:${col}">` : `<div class="mp-ph">👤</div>`;
+  const fImg = found.photo ? `<img class="mp-img" src="${found.photo}" style="border-color:${col}">` : `<div class="mp-ph">👤</div>`;
+
+  document.getElementById('popupPhotos').innerHTML = lImg + `<div class="match-vs">VS</div>` + fImg;
+
+  const badge = document.getElementById('popupBadge');
+  badge.className = 'result-badge ' + (isMatch ? 'rb-match' : 'rb-no');
+  badge.innerHTML = isMatch
+    ? `✅ AI MATCH मिला! (${score}%)`
+    : score === 0
+      ? `❌ Face Detect नहीं हुआ`
+      : `❌ Match नहीं मिला (${score}%)`;
+
+  document.getElementById('popupInfo').innerHTML = `
+    <div class="info-row"><span class="lbl">😢 Lost Person</span><span class="val">${lost?.name||'—'}</span></div>
+    <div class="info-row"><span class="lbl">🙌 Found Person</span><span class="val">${found.name}</span></div>
+    <div class="info-row"><span class="lbl">📍 कहाँ मिला</span><span class="val">${found.location}</span></div>
+    <div class="info-row"><span class="lbl">🤖 AI Score</span><span class="val">${score}%</span></div>`;
+
+  document.getElementById('popupCTA').innerHTML = isMatch && lost
+    ? `<div class="contact-cta">🎉 AI Match मिला! संपर्क करें:<br><strong style="font-size:1.15rem">📞 ${lost.mobile}</strong></div>`
+    : `<div class="no-match-note">😔 AI Match नहीं मिला। Data Admin के पास safe है।</div>`;
+
+  document.getElementById('matchPopup').classList.add('show');
+}
+
+function closePopup() { document.getElementById('matchPopup').classList.remove('show'); }
+
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+function switchTab(tab) {
+  ['lost','found'].forEach(t => {
+    document.getElementById('page-'+t).classList.remove('active');
+    document.getElementById('tab-'+t).classList.remove('active-lost','active-found');
+  });
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active-'+tab);
+}
+
+// ══════════════════════════════════════
+//  ADMIN
+// ══════════════════════════════════════
+function showAdminLogin() {
+  ['p1','p2','p3','p4','p5','p6'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('adminLoginOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('p1').focus(), 300);
+}
+function closeAdminLogin() { document.getElementById('adminLoginOverlay').classList.remove('show'); }
+function pinMove(el, nextId) { if (el.value.length===1 && nextId) document.getElementById(nextId).focus(); }
+
+function doLogin() {
+  const pin = ['p1','p2','p3','p4','p5','p6'].map(id => document.getElementById(id).value).join('');
+  if (pin === ADMIN_PIN) {
+    closeAdminLogin();
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('adminPanel').classList.add('show');
+    loadAdminData();
+    toast('✅ Admin Login सफल!','#2e7d32');
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    ['p1','p2','p3','p4','p5','p6'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('p1').focus();
+  }
+}
+function adminLogout() {
+  document.getElementById('adminPanel').classList.remove('show');
+  document.getElementById('mainApp').classList.remove('hidden');
+  toast('👋 Logged out','#555');
+}
+function switchAdminTab(tab) {
+  ['stats','lost','found','match'].forEach(t => {
+    document.getElementById('apg-'+t).classList.remove('active');
+    document.getElementById('atab-'+t).classList.remove('active');
+  });
+  document.getElementById('apg-'+tab).classList.add('active');
+  document.getElementById('atab-'+tab).classList.add('active');
+}
+
+async function loadAdminData() {
+  ['admin-lost-list','admin-found-list','admin-match-list']
+    .forEach(id => document.getElementById(id).innerHTML = '<div class="empty-box">⏳ Loading...</div>');
+
+  const [lostAll, foundAll, matchAll] = await Promise.all([
+    fbGet('lost'), fbGet('found'), fbGet('matches')
+  ]);
+
+  const lostArr  = Object.values(lostAll  || {}).filter(l => !l.matched).sort((a,b) => b.ts-a.ts);
+  const foundArr = Object.values(foundAll || {}).filter(f => !f.matched).sort((a,b) => b.ts-a.ts);
+  const matchArr = Object.values(matchAll || {}).sort((a,b) => b.ts-a.ts);
+
+  document.getElementById('as-lost').textContent  = lostArr.length;
+  document.getElementById('as-found').textContent = foundArr.length;
+  document.getElementById('as-match').textContent = matchArr.length;
+
+  const renderItem = (p, cls, tag, detail) => `
+    <div class="admin-item ${cls}">
+      ${p.photo ? `<img src="${p.photo}">` : `<div class="no-ph">👤</div>`}
+      <div class="admin-info">
+        <div class="an">${p.name}</div>
+        <div class="ad">📱 ${p.mobile}</div>
+        <div class="ad">📍 ${detail}</div>
+        <div class="ad">📅 ${p.date} ${p.time}</div>
+      </div>
+      <span class="atag ${tag}">${tag.toUpperCase()}</span>
+    </div>`;
+
+  document.getElementById('admin-lost-list').innerHTML = lostArr.length
+    ? lostArr.map(p => renderItem(p,'al','lost',p.address)).join('')
+    : '<div class="empty-box">😢 कोई Unmatched Lost person नहीं</div>';
+
+  document.getElementById('admin-found-list').innerHTML = foundArr.length
+    ? foundArr.map(p => renderItem(p,'af','found',p.location)).join('')
+    : '<div class="empty-box">🙌 कोई Unmatched Found person नहीं</div>';
+
+  document.getElementById('admin-match-list').innerHTML = matchArr.length
+    ? matchArr.map(m => `
+      <div class="admin-match-card">
+        <div class="amc-header">
+          <span class="amc-badge">✅ AI Match — ${m.score}%</span>
+          <span class="amc-date">📅 ${m.date} ${m.time}</span>
+        </div>
+        <div class="amc-pair">
+          <div class="amc-half">
+            <span class="amc-tag lost">LOST</span>
+            ${m.lostPerson.photo ? `<img src="${m.lostPerson.photo}">` : `<div class="no-photo">👤</div>`}
+            <div class="hn">${m.lostPerson.name}</div>
+            <div class="hd">📱 ${m.lostPerson.mobile}</div>
+            <div class="hd">📍 ${m.lostPerson.address}</div>
+          </div>
+          <div class="amc-conn"><div class="amc-line"></div><div class="amc-icon">🔗</div><div class="amc-line"></div></div>
+          <div class="amc-half">
+            <span class="amc-tag found">FOUND</span>
+            ${m.foundPerson.photo ? `<img src="${m.foundPerson.photo}">` : `<div class="no-photo">👤</div>`}
+            <div class="hn">${m.foundPerson.name}</div>
+            <div class="hd">📱 ${m.foundPerson.mobile}</div>
+            <div class="hd">📍 ${m.foundPerson.location}</div>
+          </div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-box">✅ अभी कोई AI Match नहीं हुआ</div>';
+}
+
+async function adminClearAll() {
+  if (!confirm('सभी data permanently delete होगा। पक्का?')) return;
+  await Promise.all([fbDelete('lost'), fbDelete('found'), fbDelete('matches')]);
+  loadAdminData();
+  toast('🗑️ सभी data हटा दिया!','#555');
+}
+
+
+function setLoad(lid, bid, show) {
+  document.getElementById(lid).style.display = show ? 'block' : 'none';
+  document.getElementById(bid).disabled = show;
+}
+function today()   { return new Date().toLocaleDateString('hi-IN'); }
+function timeNow() { return new Date().toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'}); }
+function toast(msg, color='#1a1a2e') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.background = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && document.getElementById('adminLoginOverlay').classList.contains('show')) doLogin();
+});
+</script>
+</body>
+</html>
