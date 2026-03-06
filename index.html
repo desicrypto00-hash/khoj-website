@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>खोज — Lost & Found AI Face Match</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Hind:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{--red:#e63946;--blue:#457b9d;--orange:#f4a261;--dark:#1d3557;--green:#2a9d8f;--bg:#f0f4f8;--border:#dee2e6;--muted:#6c757d;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Hind',sans-serif;background:var(--bg);min-height:100vh;color:var(--dark);}
+.header{background:linear-gradient(135deg,var(--dark),#2d6a8f);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(29,53,87,.35);}
+.logo{font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800;color:white;display:flex;align-items:center;gap:8px;}
+.logo span{color:var(--orange);}
+.abtn{background:var(--orange);color:white;border:none;padding:8px 18px;border-radius:25px;font-family:'Baloo 2',cursive;font-weight:700;font-size:.9rem;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:6px;}
+.sbar{background:var(--dark);padding:7px 20px;display:flex;align-items:center;gap:8px;font-size:.8rem;color:#a8dadc;}
+.dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.badge{background:linear-gradient(90deg,var(--red),var(--orange));color:white;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin-left:auto;}
+.tabs{display:flex;background:white;border-bottom:3px solid var(--border);}
+.tab{flex:1;padding:16px;border:none;background:transparent;font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .3s;border-bottom:3px solid transparent;margin-bottom:-3px;}
+.tab.active{color:var(--red);border-bottom-color:var(--red);background:linear-gradient(180deg,#fff5f5,white);}
+.tab.ft.active{color:var(--green);border-bottom-color:var(--green);background:linear-gradient(180deg,#f0faf8,white);}
+.wrap{padding:20px 16px;max-width:500px;margin:0 auto;}
+.tc{display:none;}.tc.active{display:block;animation:fi .4s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.stitle{font-family:'Baloo 2',cursive;font-size:1.3rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.uarea{border:2.5px dashed var(--blue);border-radius:16px;padding:30px 20px;text-align:center;background:linear-gradient(135deg,#f8fbff,#e8f4fd);cursor:pointer;transition:all .3s;margin-bottom:12px;position:relative;overflow:hidden;}
+.uarea.hp{border-color:var(--green);background:linear-gradient(135deg,#f0faf8,#d4f0eb);padding:10px;}
+.uic{font-size:2.5rem;margin-bottom:8px;}
+.utxt{font-family:'Baloo 2',cursive;font-size:1rem;font-weight:600;}
+.usub{font-size:.85rem;color:var(--blue);margin-top:4px;font-weight:600;text-decoration:underline;cursor:pointer;}
+.prev{width:100%;max-height:220px;object-fit:contain;border-radius:12px;display:none;}
+.prev.show{display:block;}
+.ubtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.ub{background:white;border:2px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Hind',sans-serif;font-weight:600;font-size:.9rem;color:var(--dark);transition:all .3s;}
+.ub:hover{border-color:var(--blue);}
+.pnote{background:#e8f4fd;border:1px solid var(--blue);border-radius:10px;padding:10px 14px;font-size:.85rem;color:#1d4a6e;display:flex;align-items:flex-start;gap:8px;margin-bottom:16px;line-height:1.5;}
+.fst{padding:10px 14px;border-radius:10px;font-size:.88rem;font-weight:600;margin-bottom:16px;display:none;align-items:center;gap:8px;}
+.fst.ok{background:#d4edda;color:#155724;display:flex;}
+.fst.err{background:#f8d7da;color:#721c24;display:flex;}
+.fst.ld{background:#cce5ff;color:#004085;display:flex;}
+.fg{margin-bottom:16px;}
+.fl{display:block;font-weight:600;font-size:.95rem;margin-bottom:6px;}
+.req{color:var(--red);}.opt{color:var(--muted);font-size:.8rem;font-weight:400;}
+.fi{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Hind',sans-serif;font-size:1rem;color:var(--dark);background:white;transition:all .3s;outline:none;}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(69,123,157,.15);}
+.fi::placeholder{color:#bbb;}
+textarea.fi{min-height:90px;resize:vertical;}
+.sbtn{width:100%;padding:16px;border:none;border-radius:14px;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;}
+.sl{background:linear-gradient(135deg,var(--red),#c1121f);color:white;box-shadow:0 4px 20px rgba(230,57,70,.35);}
+.sf{background:linear-gradient(135deg,var(--green),#1a7a6e);color:white;box-shadow:0 4px 20px rgba(42,157,143,.35);}
+.sbtn:disabled{opacity:.6;cursor:not-allowed;}
+.ov{display:none;position:fixed;inset:0;background:rgba(29,53,87,.93);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:18px;backdrop-filter:blur(6px);}
+.ov.show{display:flex;}
+.spin{width:70px;height:70px;border:5px solid rgba(255,255,255,.15);border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ovt{color:white;font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:700;text-align:center;padding:0 20px;}
+.ovs{color:#a8dadc;font-size:.9rem;margin-top:-12px;}
+.steps{background:rgba(255,255,255,.1);border-radius:12px;padding:12px 16px;min-width:270px;}
+.step{color:rgba(255,255,255,.6);font-size:.85rem;padding:5px 0;display:flex;align-items:center;gap:8px;}
+.step.active{color:white;font-weight:600;}
+.step.done{color:#a8dadc;}
+.step i{width:16px;text-align:center;flex-shrink:0;}
+input[type=file]{display:none;}
+canvas{display:none;}
+.foot{text-align:center;padding:20px;font-size:.8rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><i class="fas fa-search"></i> खोज <span>AI</span></div>
+  <a href="admin.html" class="abtn"><i class="fas fa-shield-alt"></i> Admin</a>
+</div>
+<div class="sbar">
+  <div class="dot"></div>
+  <span>Firebase Live — सभी Mobiles पर Sync</span>
+  <span class="badge">🤖 Face++ AI</span>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="sw('lost')">😢 Lost Person</button>
+  <button class="tab ft" onclick="sw('found')">🤝 Found Person</button>
+</div>
+
+<div class="wrap">
+  <!-- LOST TAB -->
+  <div class="tc active" id="tab-lost">
+    <div class="stitle">😢 खोए हुए व्यक्ति की जानकारी</div>
+    <div class="uarea" id="aL" onclick="document.getElementById('gL').click()">
+      <div class="uic" id="iL">📷</div>
+      <div class="utxt" id="tL">Gallery से Photo चुनें</div>
+      <div class="usub" id="sL" onclick="event.stopPropagation();document.getElementById('cL').click()">या Camera से खींचें</div>
+      <img class="prev" id="pL">
+    </div>
+    <div class="ubtns">
+      <button class="ub" onclick="document.getElementById('gL').click()"><i class="fas fa-images" style="color:var(--blue)"></i> Gallery</button>
+      <button class="ub" onclick="document.getElementById('cL').click()"><i class="fas fa-camera" style="color:var(--red)"></i> Camera</button>
+    </div>
+    <input type="file" id="gL" accept="image/*" onchange="hp('lost',this)">
+    <input type="file" id="cL" accept="image/*" capture="user" onchange="hp('lost',this)">
+    <div class="pnote"><i class="fas fa-info-circle" style="margin-top:2px"></i><span>साफ चेहरे वाली photo लगाएं। AI Face Match के लिए जरूरी है।</span></div>
+    <div class="fst" id="fL"></div>
+    <div class="fg"><label class="fl">नाम <span class="req">*</span></label><input class="fi" id="lN" placeholder="जैसे: Ramesh Kumar"></div>
+    <div class="fg"><label class="fl">पता <span class="req">*</span></label><input class="fi" id="lA" placeholder="घर का पूरा पता"></div>
+    <div class="fg"><label class="fl">मोबाइल <span class="req">*</span></label><input class="fi" id="lM" type="tel" placeholder="10 अंक का नंबर" maxlength="10"></div>
+    <div class="fg"><label class="fl">Last Location</label><input class="fi" id="lL" placeholder="जैसे: Railway Station, Delhi"></div>
+    <div class="fg"><label class="fl">अतिरिक्त जानकारी</label><textarea class="fi" id="lE" placeholder="कोई और जानकारी..."></textarea></div>
+    <button class="sbtn sl" id="bL" onclick="subLost()"><i class="fas fa-paper-plane"></i> Submit — Lost Person</button>
+  </div>
+
+  <!-- FOUND TAB -->
+  <div class="tc" id="tab-found">
+    <div class="stitle">🤝 मिले हुए व्यक्ति की जानकारी</div>
+    <div class="uarea" id="aF" onclick="document.getElementById('gF').click()">
+      <div class="uic" id="iF">📷</div>
+      <div class="utxt" id="tF">Gallery से Photo चुनें</div>
+      <div class="usub" id="sF" onclick="event.stopPropagation();document.getElementById('cF').click()">या Camera से खींचें</div>
+      <img class="prev" id="pF">
+    </div>
+    <div class="ubtns">
+      <button class="ub" onclick="document.getElementById('gF').click()"><i class="fas fa-images" style="color:var(--blue)"></i> Gallery</button>
+      <button class="ub" onclick="document.getElementById('cF').click()"><i class="fas fa-camera" style="color:var(--green)"></i> Camera</button>
+    </div>
+    <input type="file" id="gF" accept="image/*" onchange="hp('found',this)">
+    <input type="file" id="cF" accept="image/*" capture="user" onchange="hp('found',this)">
+    <div class="pnote"><i class="fas fa-info-circle" style="margin-top:2px"></i><span>Submit करने पर AI automatically सभी lost persons से face compare करेगा।</span></div>
+    <div class="fst" id="fF"></div>
+    <div class="fg"><label class="fl">नाम <span class="opt">(optional)</span></label><input class="fi" id="fN" placeholder="अगर पता हो"></div>
+    <div class="fg"><label class="fl">आपका मोबाइल <span class="req">*</span></label><input class="fi" id="fM" type="tel" placeholder="10 अंक का नंबर" maxlength="10"></div>
+    <div class="fg"><label class="fl">यह व्यक्ति कहाँ मिला <span class="req">*</span></label><input class="fi" id="fLc" placeholder="जैसे: Pune Bus Stand"></div>
+    <div class="fg"><label class="fl">अतिरिक्त जानकारी</label><textarea class="fi" id="fE" placeholder="कोई और जानकारी..."></textarea></div>
+    <button class="sbtn sf" id="bF" onclick="subFound()"><i class="fas fa-search"></i> Submit & AI Face Match करो</button>
+  </div>
+</div>
+<div class="foot">खोज — AI Face Match &copy; 2024 | Face++ + Vercel + Firebase</div>
+
+<div class="ov" id="ov">
+  <div class="spin"></div>
+  <div class="ovt" id="ovT">Processing...</div>
+  <div class="ovs" id="ovS">कृपया प्रतीक्षा करें</div>
+  <div class="steps" id="ovSteps"></div>
+</div>
+<canvas id="cv"></canvas>
+
+<script>
+// ===== CONFIG — PDF के हिसाब से =====
+const FIREBASE_URL  = 'https://lost-found-app-9ae30.asia-southeast1.firebasedatabase.app';
+const VERCEL_SERVER = 'https://face-server-khaki.vercel.app/api/compare';
+const MATCH_THRESH  = 70; // PDF: 70% = match
+
+let lFile=null, fFile=null, lB64=null, fB64=null;
+
+// ===== PHOTO → BASE64 (200px, 30% quality — PDF के हिसाब से) =====
+function compressPhoto(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => {
+      img.onload = () => {
+        const cv = document.getElementById('cv');
+        const MAX = 200; // PDF: 200px
+        let w = img.width, h = img.height;
+        if(w > h){ if(w>MAX){h=h*MAX/w;w=MAX;} }
+        else{ if(h>MAX){w=w*MAX/h;h=MAX;} }
+        cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        // PDF: 30% quality
+        resolve(cv.toDataURL('image/jpeg', 0.3).split(',')[1]);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== FIREBASE SAVE =====
+async function fbSave(path, data) {
+  const r = await fetch(`${FIREBASE_URL}/${path}.json`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const d = await r.json();
+  if(d.name) return d.name;
+  throw new Error('Firebase save failed');
+}
+
+// ===== FIREBASE GET ALL =====
+async function fbGet(path) {
+  const r = await fetch(`${FIREBASE_URL}/${path}.json`);
+  const d = await r.json();
+  if(!d) return [];
+  return Object.entries(d).map(([id,val]) => ({id,...val}));
+}
+
+// ===== VERCEL SERVER → FACE++ COMPARE =====
+// PDF: Browser → Vercel → Face++ (CORS bypass)
+async function faceCompare(b64img1, b64img2) {
+  const r = await fetch(VERCEL_SERVER, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({img1: b64img1, img2: b64img2})
+  });
+  if(!r.ok) throw new Error(`Server error: ${r.status}`);
+  const d = await r.json();
+  console.log('Face compare result:', JSON.stringify(d));
+  return d;
+}
+
+// ===== TAB =====
+function sw(t){
+  document.querySelectorAll('.tc').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelectorAll('.tab')[t==='lost'?0:1].classList.add('active');
+}
+
+// ===== PHOTO HANDLER =====
+function hp(type, inp) {
+  if(!inp.files||!inp.files[0]) return;
+  const file = inp.files[0];
+  const isL = type==='lost';
+  if(isL) lFile=file; else fFile=file;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(isL?'pL':'pF');
+    img.src = e.target.result; img.classList.add('show');
+    document.getElementById(isL?'aL':'aF').classList.add('hp');
+    ['i','t','s'].forEach(p=>{
+      const el=document.getElementById(p+(isL?'L':'F'));
+      if(el) el.style.display='none';
+    });
+    setFS(isL?'fL':'fF','ld','⏳ Photo compress हो रही है...');
+
+    // Compress photo
+    compressPhoto(file).then(b64 => {
+      if(isL) lB64=b64; else fB64=b64;
+      setFS(isL?'fL':'fF','ok','✅ Photo ready! Submit करो');
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function setFS(id,cls,msg){const el=document.getElementById(id);el.className='fst '+cls;el.innerHTML=msg;}
+function showOv(t,s,steps=[]){
+  document.getElementById('ovT').textContent=t;
+  document.getElementById('ovS').textContent=s;
+  document.getElementById('ovSteps').innerHTML=steps.map((x,i)=>`<div class="step" id="sp${i}"><i class="fas fa-circle"></i> ${x}</div>`).join('');
+  document.getElementById('ov').classList.add('show');
+}
+function setStep(i,done){const el=document.getElementById('sp'+i);if(!el)return;el.className='step '+(done?'done':'active');el.querySelector('i').className=done?'fas fa-check-circle':'fas fa-circle-notch fa-spin';}
+function hideOv(){document.getElementById('ov').classList.remove('show');}
+
+// ===== SUBMIT LOST =====
+async function subLost() {
+  const n=v('lN'),a=v('lA'),m=v('lM'),l=v('lL'),e=v('lE');
+  if(!lFile){sa('error','Photo जरूरी है!','');return;}
+  if(!lB64){sa('error','Photo compress हो रही है...','थोड़ा रुको');return;}
+  if(!n){sa('error','नाम जरूरी है!','');return;}
+  if(!a){sa('error','पता जरूरी है!','');return;}
+  if(!m||m.length!==10){sa('error','सही मोबाइल नंबर!','10 अंक');return;}
+
+  dis('bL',true);
+  showOv('Data Save हो रहा है...','कृपया प्रतीक्षा करें',[
+    'Photo compress हो रही है',
+    'Firebase में save हो रहा है'
+  ]);
+
+  try {
+    setStep(0,true); setStep(1);
+    const id = await fbSave('lost', {
+      name:n, addr:a, mob:m, loc:l, extra:e,
+      photo: lB64,  // base64 photo — PDF के हिसाब से
+      status:'lost',
+      createdAt: new Date().toISOString()
+    });
+    setStep(1,true);
+    hideOv(); dis('bL',false);
+
+    Swal.fire({icon:'success', title:'✅ Submit हो गया!',
+      html:`<b>${n}</b> की जानकारी save हो गई! ✅<br><small style="color:#888">ID: ${id}</small>`,
+      confirmButtonColor:'#e63946', confirmButtonText:'ठीक है'});
+    reset('lost');
+  } catch(err) {
+    hideOv(); dis('bL',false);
+    console.error(err);
+    sa('error','Error!', err.message);
+  }
+}
+
+// ===== SUBMIT FOUND + FACE MATCH =====
+async function subFound() {
+  const n=v('fN'),m=v('fM'),l=v('fLc'),e=v('fE');
+  if(!fFile){sa('error','Photo जरूरी है!','');return;}
+  if(!fB64){sa('error','Photo compress हो रही है...','थोड़ा रुको');return;}
+  if(!m||m.length!==10){sa('error','मोबाइल नंबर डालें!','10 अंक');return;}
+  if(!l){sa('error','Location जरूरी है!','');return;}
+
+  dis('bF',true);
+  showOv('AI Face Match हो रहा है...','कृपया प्रतीक्षा करें',[
+    'सभी Lost persons load हो रहे हैं',
+    'Vercel → Face++ से compare हो रहा है',
+    'Firebase में save हो रहा है'
+  ]);
+
+  try {
+    setStep(0);
+    const lostList = await fbGet('lost');
+    console.log(`Loaded ${lostList.length} lost persons`);
+    setStep(0,true); setStep(1);
+
+    let best=null, bestConf=0;
+
+    for(const p of lostList) {
+      if(!p.photo) continue;
+      try {
+        document.getElementById('ovT').textContent = `Comparing: ${p.name||'?'}...`;
+        // PDF: Browser → Vercel Server → Face++ 
+        const result = await faceCompare(fB64, p.photo);
+        const conf = result.confidence || 0;
+        console.log(`${p.name}: ${conf}%`);
+        if(conf >= MATCH_THRESH && conf > bestConf) {
+          bestConf = conf; best = p;
+        }
+      } catch(ex) {
+        console.log('Compare error:', ex.message);
+      }
+    }
+
+    setStep(1,true); setStep(2);
+
+    // Save found person
+    await fbSave('found', {
+      name:n||'Unknown', mob:m, loc:l, extra:e,
+      photo: fB64,
+      status:'found',
+      createdAt: new Date().toISOString()
+    });
+
+    // Save match
+    if(best) {
+      await fbSave('matches', {
+        lostId: best.id, lostName: best.name, lostMob: best.mob,
+        lostAddr: best.addr, lostPhoto: best.photo,
+        foundName: n||'Unknown', foundMob: m, foundLoc: l, foundPhoto: fB64,
+        confidence: Math.round(bestConf),
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    setStep(2,true);
+    hideOv(); dis('bF',false);
+
+    if(best) showPopup(best, {name:n,mob:m,loc:l,photo:fB64}, Math.round(bestConf));
+    else {
+      Swal.fire({icon:'info', title:'📋 Save हो गया',
+        html:`कोई match नहीं मिला।<br><small>${lostList.length} persons check हुए | Threshold: ${MATCH_THRESH}%</small>`,
+        confirmButtonColor:'#457b9d'});
+      reset('found');
+    }
+  } catch(err) {
+    hideOv(); dis('bF',false);
+    console.error(err);
+    sa('error','Error!', err.message);
+  }
+}
+
+// ===== MATCH POPUP =====
+function showPopup(lost, found, conf) {
+  const mkImg = (b64) => b64
+    ? `<img src="data:image/jpeg;base64,${b64}" style="width:120px;height:120px;object-fit:cover;border-radius:12px">`
+    : `<div style="width:120px;height:120px;background:#eee;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.5rem">👤</div>`;
+
+  Swal.fire({
+    title:'🎉 PERSON FOUND! 🎉',
+    html:`<div style="font-family:'Hind',sans-serif">
+      <div style="display:flex;justify-content:center;gap:10px;margin-bottom:14px;align-items:flex-end">
+        <div style="text-align:center">
+          <div style="border:3px solid #e63946;border-radius:12px;overflow:hidden">${mkImg(lost.photo)}</div>
+          <div style="font-size:.75rem;color:#e63946;font-weight:700;margin-top:4px">😢 LOST</div>
+          <b>${lost.name}</b>
+        </div>
+        <div style="font-size:2rem;padding-bottom:32px">🔁</div>
+        <div style="text-align:center">
+          <div style="border:3px solid #2a9d8f;border-radius:12px;overflow:hidden">${mkImg(found.photo)}</div>
+          <div style="font-size:.75rem;color:#2a9d8f;font-weight:700;margin-top:4px">🤝 FOUND</div>
+          <b>${found.name||'Unknown'}</b>
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#d4edda,#c3e6cb);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="font-size:1.2rem;font-weight:800;color:#155724">🎯 Face++ Match: ${conf}%</div>
+        <div style="font-size:.78rem;color:#155724">Vercel + Face++ AI verified ✅</div>
+      </div>
+      <div style="background:#f8f9fa;border-radius:10px;padding:12px;margin-bottom:10px;text-align:left;font-size:.88rem">
+        <div style="margin-bottom:4px"><b>📍 मिला:</b> ${found.loc}</div>
+        <div><b>🏠 पता:</b> ${lost.addr||'N/A'}</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#1d3557,#2d6a8f);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="color:#a8dadc;font-size:.8rem;margin-bottom:6px">📞 परिवार को Call करें:</div>
+        <a href="tel:${lost.mob}" style="display:block;background:#f4a261;color:white;padding:12px;border-radius:10px;font-size:1.1rem;font-weight:800;text-decoration:none;text-align:center">📞 ${lost.mob}</a>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a href="https://wa.me/91${lost.mob}?text=${encodeURIComponent(lost.name+' मिल गए! Location: '+found.loc+'. AI Match: '+conf+'%')}" target="_blank" style="flex:1;background:#25D366;color:white;padding:10px;border-radius:10px;font-size:.88rem;font-weight:700;text-decoration:none;text-align:center">💬 WhatsApp</a>
+        <button onclick="navigator.clipboard.writeText('${lost.mob}')" style="flex:1;background:#457b9d;color:white;padding:10px;border-radius:10px;font-size:.88rem;font-weight:700;border:none;cursor:pointer">📋 Copy</button>
+      </div>
+    </div>`,
+    confirmButtonColor:'#e63946', confirmButtonText:'✅ ठीक है',
+    allowOutsideClick:false, width:'95%', padding:'1.5rem'
+  });
+  reset('found');
+}
+
+function reset(t){
+  if(t==='lost'){['lN','lA','lM','lL','lE'].forEach(id=>sv(id,''));
+    document.getElementById('pL').classList.remove('show');
+    document.getElementById('aL').classList.remove('hp');
+    ['iL','tL','sL'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+    document.getElementById('fL').className='fst'; lFile=null; lB64=null;}
+  else{['fN','fM','fLc','fE'].forEach(id=>sv(id,''));
+    document.getElementById('pF').classList.remove('show');
+    document.getElementById('aF').classList.remove('hp');
+    ['iF','tF','sF'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+    document.getElementById('fF').className='fst'; fFile=null; fB64=null;}
+}
+function v(id){return document.getElementById(id).value.trim();}
+function sv(id,val){document.getElementById(id).value=val;}
+function dis(id,d){document.getElementById(id).disabled=d;}
+function sa(icon,title,text){Swal.fire({icon,title,text,confirmButtonColor:'#e63946'});}
+</script>
+</body>
+</html>
